@@ -32,7 +32,7 @@
 		import { WEBVR } from "./lib/WebVR.js";
 		import { RouletteGame } from './script.js';
 		import { OBJLoader } from './lib/objloader.js';
-
+		
 		var canvas = document.querySelector( 'canvas' );
 
 		var camera, scene, renderer;
@@ -42,9 +42,17 @@
 		renderer.setPixelRatio( window.devicePixelRatio );
 		renderer.setSize( window.innerWidth, window.innerHeight );
 
-		//renderer.vr.enabled = true;
+		renderer.vr.enabled = true;
 
+		renderer.vr.getController(0).addEventListener("selectstart", function() {
+			game.spin();
+		});
+		renderer.vr.getController(1).addEventListener("selectstart", function() {
+			game.spin();
+		});
 		camera = new THREE.PerspectiveCamera();
+
+		var cgroup = new THREE.Group();
 
 		function onWindowResize() {
 
@@ -68,24 +76,29 @@
 
 		var vec = new THREE.Vector3();
 
-		scene.add(camera);
+		cgroup.add(camera);
+	
+		scene.add(cgroup);
 
 		//camera.position.set(0, 0, 3);
 		var group = new THREE.Group();
 
-		camera.lookAt(group);
 		
 		scene.add(group);
 
-		group.scale.set(0.2, 0.2, 0.2);
-		//group.position.set(0, 2, 5);
+		cgroup.scale.set(0.1, 0.1, 0.1);
+		group.position.set(0, -5, -30);
+		//camera.lookAt(group);
+		
 		var geometry = new THREE.PlaneGeometry(0.9,1,1);
 			
 		var game = new RouletteGame();
 		
-		game.onEnd = function (num) {}
+		game.onEnd = function (num) {
+			game.active = false;
+		}
 
-		group.position.y	= geometry.parameters.height/2;
+		//group.position.y	= geometry.parameters.height/2;
 		group.rotation.x = Math.PI;
 			
 		
@@ -146,10 +159,10 @@
 		// window.sound = new SoundManager("sound.mp3");
 		
 		//game.onHit = sound.hit.bind(sound);
-		// window.addEventListener("mousedown", function(){
-		//   game.spin();
-		//   sound.start();
-		// });
+		window.addEventListener("mousedown", function(){
+		   game.spin();
+		   //sound.start();
+		 });
 		var	loader = new OBJLoader();
   
 		THREE.TextureLoader.prototype.crossOrigin = '';
@@ -229,6 +242,11 @@
 			
 		});
 		var lastTimeMsec= null;
+		var targetPos = new THREE.Vector3();
+		var origPos = new THREE.Vector3();
+		var vec = new THREE.Vector3();
+		var vec2 = new THREE.Vector3();
+
 		function render() {
 			
 			scene.dispatchEvent({ type: "tick", time: window.performance.now() });
@@ -241,10 +259,22 @@
 			onRenderFcts.forEach(function(onRenderFct){
 				onRenderFct(deltaMsec/1000, nowMsec/1000)
 			});
+			if(game.active) {
+				ball.getWorldPosition(vec);
+				cgroup.position.lerp(vec, 0.2);
+				cgroup.lookAt(vec);
+				cgroup.rotation.y += Math.PI;
+				ball.visible = false;
+			} else {
+				cgroup.position.lerp(origPos, 0.02);
+				group.getWorldPosition(vec);
+				cgroup.lookAt(0, 0, 0);
+				ball.visible = true;
+			}
 			renderer.render(scene, camera);
 		
 		}
-
+		document.body.appendChild( WEBVR.createButton( renderer ) );
 		renderer.setAnimationLoop(render);
 
 		</script>

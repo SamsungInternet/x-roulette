@@ -9,7 +9,7 @@ var world = new OIMO.World({
   info:false,
 });
 
-world.gravity = new OIMO.Vec3(0, 1, 0);
+world.gravity = new OIMO.Vec3(0, 0.66, 0);
 
 
 var RouletteGame = function() {
@@ -27,9 +27,9 @@ var RouletteGame = function() {
       size:[0.3], 
       rot:[0,0,0],
       pos:[Math.sin(Math.PI) * 20,-2,Math.cos(Math.PI) * 20], 
-      density:0.6,
-      friction:0.4,
-    restitution:2.4
+      density:0.3,
+      friction:0.3,
+    restitution:3
   });
   
   this.slots = [];
@@ -96,7 +96,8 @@ RouletteGame.prototype.spin = function() {
   this.locked = false;
   this.spinPreStart = window.performance.now()/1000;
   this.spinStart = this.spinPreStart +  4 + Math.random(); 
-  this.trigger = this.spinStart + 1 + Math.random() * 2;
+  this.trigger = this.spinStart + 1 + Math.random() * 3;
+  this.active = true;
 }
 
 RouletteGame.prototype.update = function () {
@@ -141,14 +142,14 @@ RouletteGame.prototype.update = function () {
     this.ball.linearVelocity.multiplyScalar(0.99);
     this.world.step();
     
-    var hits = 0;
-    this.slots.forEach(function (s) {
+    this.hits = 0;
+    this.slots.forEach((s) =>{
       this.hits++;
-      if(hits > 0) return;
+      if(this.hits > 0) return;
       if(self.world.getContact( self.ball, s )) {
         //this.ball.applyImpulse( this.center, {x: 0, y: 1, z: 0} );
         self.onHit(s);
-        hits++;
+        this.hits++;
       }
     });
     if(now > this.trigger || this.world.getContact( this.ball, this.cylinder )){
