@@ -1,7 +1,7 @@
 import * as THREE from "./lib/three.js";
 
 var world = new OIMO.World({ 
-  timestep: 1/60, 
+  timestep: 1/72, 
   iterations: 8, 
   broadphase: 2, 
   worldscale: 10, 
@@ -27,9 +27,9 @@ var RouletteGame = function() {
       size:[0.3], 
       rot:[0,0,0],
       pos:[Math.sin(Math.PI) * 20,-2,Math.cos(Math.PI) * 20], 
-      density:0.3,
-      friction:0.3,
-    restitution:3
+      density:0.5,
+      friction:0.4,
+    restitution:2.4
   });
   
   this.slots = [];

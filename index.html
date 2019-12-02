@@ -261,12 +261,12 @@
 			});
 			if(game.active) {
 				ball.getWorldPosition(vec);
-				cgroup.position.lerp(vec, 0.2);
+				cgroup.position.lerp(vec, 0.33);
 				cgroup.lookAt(vec);
 				cgroup.rotation.y += Math.PI;
 				ball.visible = false;
 			} else {
-				cgroup.position.lerp(origPos, 0.02);
+				cgroup.position.lerp(origPos, 0.03);
 				group.getWorldPosition(vec);
 				cgroup.lookAt(0, 0, 0);
 				ball.visible = true;
