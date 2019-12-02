@@ -1,18 +1,23 @@
+import * as THREE from "./lib/three.js";
+
+var world = new OIMO.World({ 
+  timestep: 1/60, 
+  iterations: 8, 
+  broadphase: 2, 
+  worldscale: 10, 
+  random: true, 
+  info:false,
+});
+
+world.gravity = new OIMO.Vec3(0, 1, 0);
+
+
 var RouletteGame = function() {
   this.onHit = function () { };
   this.onEnd = function () { };
   
   this.hits = 0;
   
-  var world = new OIMO.World({ 
-        timestep: 1/60, 
-        iterations: 8, 
-        broadphase: 2, 
-        worldscale: 10, 
-        random: true, 
-        info:false,
-  });
-  world.gravity = new OIMO.Vec3(0, 1, 0);
   
   this.rot = 0;
   
@@ -132,19 +137,7 @@ RouletteGame.prototype.update = function () {
       this.ball.applyImpulse( this.center, force );
     } 
     
-    /*
-    if(dist < 4) {
-        var p2 = p.clone().normalize();
-        var pf = p2.clone();
-        //var fp = force.clone().negate;
-        pf.y = 2;
-        pf.x = -p2.z * 0.33;
-        pf.z = p2.x * 0.33;
-        
-        this.ball.applyImpulse( this.center, pf.multiplyScalar(0.000033) );
-    }
-    */
-    
+     
     this.ball.linearVelocity.multiplyScalar(0.99);
     this.world.step();
     
@@ -189,3 +182,5 @@ RouletteGame.prototype.update = function () {
   //console.log(this.ball.linearVelocity.length());
   
 }
+
+export {RouletteGame};

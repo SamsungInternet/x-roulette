@@ -1974,8 +1974,6 @@ vt 0.8181924 0.8032393
 vt 0.8605934 0.7060154
 vt 0.8605686 0.8032393
 
-usemtl Roulette_Base_Color
-usemap Roulette_Base_Color
 f 1/1/1 2/2/2 3/3/3
 f 2/2/2 1/1/1 4/4/4
 f 3/3/3 5/5/5 1/1/1

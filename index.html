@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three-system</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link rel="icon" type="image/png" href="//developer.samsung.com/sd2_common/img/favicon-32x32.png" sizes="32x32">
+		<style>
+			body {
+				background-color:aqua;
+			}
+			canvas {
+				position: fixed;
+				top: 0;
+				left:0;
+				width: 100vw;
+				height: 100vh;
+			}
+
+			
+		</style>
+
+		
+
+	</head>
+	<body>
+		<canvas></canvas>
+		<script src="lib/oimo.js"></script>
+		<script type="module">
+
+		import * as THREE from "./lib/three.js";
+		import { WEBVR } from "./lib/WebVR.js";
+		import { RouletteGame } from './script.js';
+		import { OBJLoader } from './lib/objloader.js';
+
+		var canvas = document.querySelector( 'canvas' );
+
+		var camera, scene, renderer;
+
+		renderer = new THREE.WebGLRenderer( { canvas: canvas, antialias: true } );
+
+		renderer.setPixelRatio( window.devicePixelRatio );
+		renderer.setSize( window.innerWidth, window.innerHeight );
+
+		//renderer.vr.enabled = true;
+
+		camera = new THREE.PerspectiveCamera();
+
+		function onWindowResize() {
+
+			var aspect = window.innerWidth / window.innerHeight;
+			camera.aspect = aspect;
+			camera.updateProjectionMatrix();
+
+			var dpr = renderer.getPixelRatio();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+
+		}
+
+		scene = new THREE.Scene();
+
+		
+		var onRenderFcts= [];
+
+		scene	= new THREE.Scene();
+
+		camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
+
+		var vec = new THREE.Vector3();
+
+		scene.add(camera);
+
+		//camera.position.set(0, 0, 3);
+		var group = new THREE.Group();
+
+		camera.lookAt(group);
+		
+		scene.add(group);
+
+		group.scale.set(0.2, 0.2, 0.2);
+		//group.position.set(0, 2, 5);
+		var geometry = new THREE.PlaneGeometry(0.9,1,1);
+			
+		var game = new RouletteGame();
+		
+		game.onEnd = function (num) {}
+
+		group.position.y	= geometry.parameters.height/2;
+		group.rotation.x = Math.PI;
+			
+		
+		var shinyMaterial = new THREE.MeshStandardMaterial({
+			color: 0xFFFFFF,
+			metalness: 0.1,
+			roughness: 0.01,
+		});
+			shinyMaterial.side = THREE.DoubleSide;
+		var lobe = new THREE.Mesh(new THREE.SphereGeometry(6, 32, 32), shinyMaterial);
+		lobe.position.copy(game.lobe.getPosition());
+		lobe.quaternion.copy(game.lobe.quaternion);
+		var ball = new THREE.Mesh(new THREE.SphereGeometry(0.18, 32, 32), shinyMaterial);
+		ball.castShadow = true;
+		var slot = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,0.6), shinyMaterial);
+		var bump = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.2,1), shinyMaterial);
+		group.add(ball);
+
+		var slots = [];
+			
+		game.slots.forEach(function (s) {
+			var sl = slot.clone();
+			sl.position.copy(s.getPosition());
+			sl.quaternion.copy(s.quaternion);
+			//group.add(sl);
+			s._mesh = sl;
+		});
+		
+		function adjustHeight(obj, impostor) {
+			obj.position.copy(impostor.getPosition());
+			var l = obj.position.length();
+			obj.position.y = 1.6 - (l > 3 ? l * 0.28 : 0.33);
+		}
+		var bumps = [];
+			
+		game.bumps.forEach(function (s) {
+			var sl = bump.clone();
+			adjustHeight(sl, s);
+			sl.quaternion.copy(s.quaternion);
+			//group.add(sl);
+			s._mesh = sl;
+		});
+
+		onRenderFcts.push(function(){
+			adjustHeight(ball, game.ball);
+			
+			game.slots.forEach(function (s, i) {
+			var sl = s._mesh;
+			sl.position.copy(s.getPosition());
+			sl.quaternion.copy(s.quaternion);
+			});
+			var v = (game.locked ? 0 : (game.ball.linearVelocity.length() || 3))/ 3;
+			//sound.setLevel(v);
+			renderer.render( scene, camera );
+			
+		});
+
+		// window.sound = new SoundManager("sound.mp3");
+		
+		//game.onHit = sound.hit.bind(sound);
+		// window.addEventListener("mousedown", function(){
+		//   game.spin();
+		//   sound.start();
+		// });
+		var	loader = new OBJLoader();
+  
+		THREE.TextureLoader.prototype.crossOrigin = '';
+			
+		var matex= new THREE.TextureLoader().load( "assets/material.png");
+		var normalTex = new THREE.TextureLoader().load( "assets/normal.png" );
+		var mapTex = new THREE.TextureLoader().load( "assets/color.png" );
+			
+		loader.load("assets/base.obj", function (obj) {
+			var tempGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+			tempGeo.mergeVertices();
+			tempGeo.computeVertexNormals();
+			tempGeo.computeFaceNormals();
+			obj.children[0].geometry.computeVertexNormals();
+			obj.children[0].geometry.computeFaceNormals();
+			var obj2 = new THREE.Mesh(tempGeo, new THREE.MeshStandardMaterial({
+			metalness: 0.5,
+			roughness: 0.5,
+			normalMap: normalTex,
+			map: mapTex,
+			metalnessMap: matex,
+			roughnessMap: matex,
+			aoMap: matex,
+			depthWrite: true,
+			//transparent: true,
+			//opacity: 0.3
+			}));
+			obj2.receiveShadow = true;
+			obj2.scale.set(16,16,16);
+			obj2.rotation.x = Math.PI;
+			obj2.position.y = 1;
+			obj2.material.side = THREE.BackSide;
+			group.add(obj2);
+					
+		});
+		var g2 = new THREE.Group();
+		var directionalLight;
+		(new OBJLoader()).load("assets/spin.obj", function (obj) {
+			
+			group.add(g2);
+			
+			var tempGeo = new THREE.Geometry().fromBufferGeometry(obj.children[0].geometry);
+
+			tempGeo.mergeVertices();
+
+			tempGeo.computeVertexNormals();
+			tempGeo.computeFaceNormals();
+			obj.children[0].geometry.computeVertexNormals();
+			obj.children[0].geometry.computeFaceNormals();
+			
+			var obj2 = new THREE.Mesh(tempGeo, new THREE.MeshStandardMaterial({
+			metalness: 0.5,
+			roughness: 0.5,
+			normalMap: normalTex,
+			map: mapTex,
+			metalnessMap: matex,
+			roughnessMap: matex,
+			aoMap: matex,
+			//shading: THREE.SmoothShading,
+			//transparent: true,
+			//opacity: 0.3
+			}));
+			obj2.receiveShadow = true;
+			obj2.scale.set(16,16,16);
+			obj2.rotation.x = Math.PI;
+			obj2.position.y = 1;
+			obj2.material.side = THREE.BackSide;
+			g2.add(obj2);
+			g2.add(new THREE.AmbientLight( 0x404040 ));
+			directionalLight = new THREE.DirectionalLight( 0xffffff, 0.9 );
+			directionalLight.position.set(10,-10,10);
+			directionalLight.target = obj2;
+			directionalLight.castShadow = true;
+			group.add(directionalLight);
+			
+			
+			
+		});
+		var lastTimeMsec= null;
+		function render() {
+			
+			scene.dispatchEvent({ type: "tick", time: window.performance.now() });
+			var nowMsec = window.performance.now();
+			lastTimeMsec	= lastTimeMsec || nowMsec-1000/60
+			var deltaMsec	= Math.min(200, nowMsec - lastTimeMsec)
+			lastTimeMsec	= nowMsec
+			game.update();
+			g2.rotation.y = -game.rot;
+			onRenderFcts.forEach(function(onRenderFct){
+				onRenderFct(deltaMsec/1000, nowMsec/1000)
+			});
+			renderer.render(scene, camera);
+		
+		}
+
+		renderer.setAnimationLoop(render);
+
+		</script>
+
+	</body>
+</html>
